@@ -1,16 +1,32 @@
 <?php
 require '../config.php';
 
+$success = ''; // Variabel untuk menyimpan pesan sukses
+$error = ''; // Variabel untuk menyimpan pesan error
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $username = $_POST['username'];
     $email = $_POST['email'];
     $password = password_hash($_POST['password'], PASSWORD_BCRYPT);
 
-    $sql = "INSERT INTO users (username, email, password) VALUES (?, ?, ?)";
+    // Validasi email yang sudah ada
+    $sql = "SELECT * FROM users WHERE email = ?";
     $stmt = $pdo->prepare($sql);
-    $stmt->execute([$username, $email, $password]);
+    $stmt->execute([$email]);
+    $existingUser = $stmt->fetch();
 
-    echo "User registered successfully.";
+    if ($existingUser) {
+        $error = "Email is already registered."; // Set pesan error
+    } else {
+        // Insert user ke dalam database
+        $sql = "INSERT INTO users (username, email, password) VALUES (?, ?, ?)";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$username, $email, $password]);
+
+        $success = "User registered successfully. Redirecting to login..."; // Set pesan sukses
+        // Redirect setelah beberapa detik
+        echo "<script>setTimeout(function(){ window.location.href = 'login.php'; }, 2000);</script>";
+    }
 }
 ?>
 
@@ -22,41 +38,66 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-          body {
-            background-image: url("cesbg.jpg");
-            width: 100%;
-            height: 110vh; /* Mengatur tinggi elemen body menjadi 100% dari tinggi viewport */
-            background-position: center;
-            background-repeat: no-repeat;
-            background-size: cover; /* Pastikan gambar menutupi seluruh area */
+        body {
+            background-color: #FFFF00; /* Latar belakang kuning */
             margin: 0; /* Menghapus margin default dari body */
         }
 
         .card {
-            max-width: 500px; /* Increase max-width to enlarge the form */
-            margin: 50px auto; /* Center the card vertically and horizontally */
+            max-width: 500px; /* Maksimal lebar kartu */
+            margin: 50px auto; /* Pusatkan kartu secara vertikal dan horizontal */
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            background-color: #800000; /* Latar belakang maroon */
+            color: #ffffff; /* Teks putih */
+        }
+
+        .card-header {
+            background-color: #000000; /* Latar belakang hitam untuk header */
+            border-radius: 10px 10px 0 0;
+            color: #ffffff; /* Teks putih */
+            text-align: center;
+            padding: 10px;
         }
 
         .card-title {
-            text-align: center;
+            margin-top: 10px;
             font-size: 24px;
-            margin-bottom: 20px;
+            color: #ffffff; /* Teks putih untuk judul */
         }
 
-        .form-group {
-            margin-bottom: 20px;
+        .form-group label {
+            color: #ffffff; /* Teks label menjadi putih */
+        }
+
+        .form-group input {
+            background-color: #ffffff; /* Latar belakang input */
+            color: #000000; /* Teks input menjadi hitam */
         }
 
         .btn-primary {
-            width: 100%;
+            background-color: #000000; /* Tombol menjadi hitam */
+            border: none;
+            color: #ffffff; /* Teks tombol putih */
+        }
+
+        .btn-primary:hover {
+            background-color: #333333; /* Warna tombol saat hover */
         }
 
         .text-center {
-            text-align: center;
+            color: #ffffff; /* Teks di bagian text-center menjadi putih */
+        }
+
+        .text-center a {
+            color: #007bff; /* Teks link menjadi biru */
+        }
+
+        .text-center a:hover {
+            text-decoration: underline; /* Garis bawah saat hover */
         }
     </style>
 </head>
@@ -66,7 +107,27 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <div class="row justify-content-center">
             <div class="col-md-6">
                 <div class="card mt-4">
-                    <h1 class="card-title">Register</h1>
+                    <header class="card-header">
+                        <h1 class="card-title">
+                            <i class="fas fa-smile"></i> Register
+                        </h1>
+                    </header>
+                    <?php if ($success): ?>
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <?php echo $success; ?>
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    <?php endif; ?>
+                    <?php if ($error): ?>
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <?php echo $error; ?>
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    <?php endif; ?>
                     <form method="post" action="">
                         <div class="form-group">
                             <label for="username">Username:</label>
@@ -89,6 +150,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             </div>
         </div>
     </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 
 </html>

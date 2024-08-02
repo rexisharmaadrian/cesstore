@@ -2,6 +2,8 @@
 require '../config.php';
 session_start();
 
+$error = ''; // Variabel untuk menyimpan pesan error
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = $_POST['email'];
     $password = $_POST['password'];
@@ -13,10 +15,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if ($user && password_verify($password, $user['password'])) {
         $_SESSION['user_id'] = $user['id'];
-        echo "Login successful.";
         header("Location: ../index.php");
+        exit(); // Pastikan untuk berhenti eksekusi setelah redirect
     } else {
-        echo "Invalid email or password.";
+        $error = "Invalid email or password."; // Set pesan error
     }
 }
 ?>
@@ -29,14 +31,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         body {
-            background-image: url("cesbg.jpg");
-            width: 100%;
-            height: 100vh; /* Mengatur tinggi elemen body menjadi 100% dari tinggi viewport */
-            background-position: center;
-            background-repeat: no-repeat;
-            background-size: cover; /* Pastikan gambar menutupi seluruh area */
+            background-color: #FFFF00; /* Latar belakang kuning */
             margin: 0; /* Menghapus margin default dari body */
         }
 
@@ -51,9 +49,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
 
         .card-header {
-            background-color: #007bff;
+            background-color: #000000; /* Latar belakang hitam */
             border-radius: 10px 10px 0 0;
-            color: #ffffff;
+            color: #ffffff; /* Teks putih */
             text-align: center;
         }
 
@@ -63,23 +61,38 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         .card-body {
             padding: 20px;
+            background-color: #800000; /* Latar belakang maroon */
         }
 
-        .form-group {
-            margin-bottom: 20px;
+        .form-group label {
+            color: #ffffff; /* Teks label menjadi putih */
+        }
+
+        .form-group input {
+            background-color: #ffffff; /* Latar belakang input */
+            color: #000000; /* Teks input menjadi hitam */
         }
 
         .btn-primary {
-            background-color: #007bff;
+            background-color: #000000; /* Tombol login menjadi hitam */
             border: none;
+            color: #ffffff; /* Teks tombol menjadi putih */
         }
 
         .btn-primary:hover {
-            background-color: #0056b3;
+            background-color: #333333; /* Warna tombol saat hover */
         }
 
         .text-center {
-            font-size: 14px;
+            color: #ffffff; /* Teks di bagian text-center menjadi putih */
+        }
+
+        .text-center a {
+            color: #007bff; /* Teks link menjadi biru */
+        }
+
+        .text-center a:hover {
+            text-decoration: underline; /* Garis bawah saat hover */
         }
     </style>
 </head>
@@ -90,9 +103,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <div class="col-md-6">
                 <div class="card">
                     <header class="card-header">
-                        <h4 class="card-title mt-2">Login</h4>
+                        <h4 class="card-title mt-2">
+                            <i class="fas fa-smile"></i>
+                        </h4>
                     </header>
                     <article class="card-body">
+                        <?php if ($error): ?>
+                            <div class="alert alert-danger" role="alert">
+                                <?php echo $error; ?>
+                            </div>
+                        <?php endif; ?>
                         <form method="post" action="">
                             <div class="form-group">
                                 <label for="email">Email:</label>
