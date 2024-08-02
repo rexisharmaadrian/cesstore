@@ -15,9 +15,9 @@ if (isset($_GET['action']) && $_GET['action'] == 'delete' && isset($_GET['id']))
     $deleted = $stmt->rowCount() > 0;
 
     if ($deleted) {
-        echo "Product deleted from cart.";
+        echo "<div class='alert alert-success' role='alert'>Product deleted from cart.</div>";
     } else {
-        echo "Failed to delete product from cart.";
+        echo "<div class='alert alert-danger' role='alert'>Failed to delete product from cart.</div>";
     }
 }
 
@@ -30,7 +30,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'add' && isset($_GET['id'])) {
     $stmt = $pdo->prepare($sql);
     $stmt->execute([$user_id, $product_id, 1]);
 
-    echo "Product added to cart.";
+    echo "<div class='alert alert-success' role='alert'>Product added to cart.</div>";
 }
 
 // Handle update action
@@ -43,7 +43,7 @@ if (isset($_POST['action']) && $_POST['action'] == 'update' && isset($_POST['id'
     $stmt = $pdo->prepare($sql);
     $stmt->execute([$quantity, $cart_id, $user_id]);
 
-    echo "Cart updated.";
+    echo "<div class='alert alert-success' role='alert'>Cart updated.</div>";
 }
 
 // Retrieve cart items for the current user
@@ -54,8 +54,15 @@ if (isset($_SESSION['user_id'])) {
     $stmt = $pdo->prepare($sql);
     $stmt->execute([$_SESSION['user_id']]);
     $cart_items = $stmt->fetchAll();
+
+    // Calculate total price
+    $total_price = 0;
+    foreach ($cart_items as $item) {
+        $total_price += $item['price'] * $item['quantity'];
+    }
 } else {
     $cart_items = []; // If user_id is not set in session, initialize an empty array
+    $total_price = 0;
 }
 ?>
 
@@ -69,89 +76,105 @@ if (isset($_SESSION['user_id'])) {
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
-    background-image: url("cesbg.jpg");
-    background-position: center;
-    background-repeat: no-repeat;
-    background-size: cover;
-    height: 100vh; /* Tinggi elemen body sesuai dengan tinggi viewport */
-    margin: 0; /* Menghilangkan margin bawaan dari body */
-    font-family: Arial, sans-serif; /* Contoh pengaturan font-family yang umum */
-}
+            background-image: url("cesbg.jpg");
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            color: #333;
+        }
 
-.container {
-    padding-top: 50px; /* Jarak atas 50px dari container */
-    max-width: 800px; /* Lebar maksimum container */
-    margin: 0 auto; /* Tengahkan container di tengah layar */
-}
+        .container {
+            padding-top: 50px;
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            padding: 20px;
+        }
 
-.table {
-    background-color: #ffffff; /* Latar belakang putih untuk tabel */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Bayangan tipis */
-    border-radius: 8px; /* Sudut melengkung */
-    width: 100%; /* Lebar tabel 100% dari container */
-    margin-bottom: 20px; /* Jarak bawah 20px dari tabel */
-    overflow: hidden; /* Mengatasi masalah overflow dari box-shadow */
-}
+        .table {
+            background-color: #ffffff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
 
-.table th,
-.table td {
-    padding: 12px; /* Padding dalam sel header dan sel data */
-    text-align: center; /* Pusatkan teks dalam sel */
-}
+        .table th,
+        .table td {
+            padding: 12px;
+            text-align: center;
+        }
 
-.btn-checkout {
-    margin-top: 20px; /* Jarak atas 20px dari tombol checkout */
-}
+        .btn-checkout {
+            margin-top: 20px;
+        }
 
-.btn-primary,
-.btn-secondary {
-    display: inline-block; /* Atur tombol menjadi inline-block */
-    padding: 0.375rem 0.75rem; /* Padding dalam tombol */
-    text-align: center; /* Pusatkan teks dalam tombol */
-    text-decoration: none; /* Hapus garis bawah pada tautan */
-    cursor: pointer; /* Ubah kursor saat mengarah ke tombol */
-    border-radius: 4px; /* Sudut melengkung pada tombol */
-    color: #fff; /* Warna teks putih */
-    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease; /* Animasi perubahan properti */
-}
+        .btn-primary,
+        .btn-secondary {
+            display: inline-block;
+            padding: 0.375rem 0.75rem;
+            text-align: center;
+            text-decoration: none;
+            cursor: pointer;
+            border-radius: 4px;
+            color: #fff;
+            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+        }
 
-.btn-primary {
-    background-color: #007bff; /* Warna latar belakang biru untuk tombol primer */
-    border-color: #007bff; /* Warna border biru untuk tombol primer */
-}
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
 
-.btn-primary:hover {
-    background-color: #0056b3; /* Warna latar belakang biru gelap saat tombol primer dihover */
-    border-color: #0056b3; /* Warna border biru gelap saat tombol primer dihover */
-}
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #0056b3;
+        }
 
-.btn-secondary {
-    background-color: #6c757d; /* Warna latar belakang abu-abu untuk tombol sekunder */
-    border-color: #6c757d; /* Warna border abu-abu untuk tombol sekunder */
-}
+        .btn-secondary {
+            background-color: #6c757d;
+            border-color: #6c757d;
+        }
 
-.btn-secondary:hover {
-    background-color: #545b62; /* Warna latar belakang abu-abu gelap saat tombol sekunder dihover */
-    border-color: #545b62; /* Warna border abu-abu gelap saat tombol sekunder dihover */
-}
+        .btn-secondary:hover {
+            background-color: #545b62;
+            border-color: #545b62;
+        }
 
-.quantity-input {
-    width: 50px; /* Lebar input kuantitas */
-    text-align: center; /* Pusatkan teks dalam input */
-}
+        .quantity-input {
+            width: 60px;
+            text-align: center;
+        }
 
-.btn-increase,
-.btn-decrease {
-    padding: 0.375rem 0.75rem; /* Padding dalam tombol peningkatan dan penurunan */
-}
+        .btn-increase,
+        .btn-decrease {
+            padding: 0.375rem 0.75rem;
+        }
 
+        .btn-danger {
+            background-color: #dc3545;
+            border-color: #dc3545;
+        }
+
+        .btn-danger:hover {
+            background-color: #c82333;
+            border-color: #bd2130;
+        }
+
+        .cart-summary {
+            font-weight: bold;
+            margin-top: 20px;
+        }
     </style>
 </head>
 
 <body>
-    
     <div class="container mt-5">
-        <h1 class="mb-4">total</h1>
+        <h1 class="mb-4">Your Cart</h1>
         <table class="table table-bordered">
             <thead class="thead-light">
                 <tr>
@@ -165,14 +188,14 @@ if (isset($_SESSION['user_id'])) {
             <tbody>
                 <?php foreach ($cart_items as $item): ?>
                     <tr>
-                        <td><?php echo $item['name']; ?></td>
+                        <td><?php echo htmlspecialchars($item['name']); ?></td>
                         <td><?php echo number_format($item['price'], 0, ',', '.'); ?> RP</td>
                         <td>
                             <form action="cart.php" method="POST" class="d-inline">
                                 <input type="hidden" name="action" value="update">
                                 <input type="hidden" name="id" value="<?php echo $item['id']; ?>">
-                                <button type="submit" name="quantity" value="<?php echo $item['quantity'] - 1; ?>"
-                                    class="btn btn-decrease btn-sm">-</button>
+                                <button type="submit" name="quantity" value="<?php echo max($item['quantity'] - 1, 1); ?>"
+                                    class="btn btn-decrease btn-sm" <?php if ($item['quantity'] <= 1) echo 'disabled'; ?>>-</button>
                                 <input type="number" name="quantity" value="<?php echo $item['quantity']; ?>"
                                     class="quantity-input" min="1">
                                 <button type="submit" name="quantity" value="<?php echo $item['quantity'] + 1; ?>"
@@ -188,6 +211,9 @@ if (isset($_SESSION['user_id'])) {
                 <?php endforeach; ?>
             </tbody>
         </table>
+        <div class="cart-summary">
+            <span>Total Price: <?php echo number_format($total_price, 0, ',', '.'); ?> RP</span>
+        </div>
         <a href="checkout.php" class="btn btn-primary btn-checkout">Proceed to Checkout</a>
         <a href="../index.php" class="btn btn-secondary">Back to Products</a>
     </div>

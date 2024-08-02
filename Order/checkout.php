@@ -21,40 +21,41 @@ $cart_items = $stmt->fetchAll();
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
-            background-color: #f8f9fa;
-            position: relative;
-        }
-
-        .bg-image {
-            background-image: url('cesbg.jpg'); /* Ganti dengan path gambar latar belakang Anda */
-            position: fixed;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            z-index: -1;
+            background-image: url('cesbg.jpg'); /* Background image */
+            background-size: cover; /* Cover the whole page */
+            background-attachment: fixed; /* Fix the background */
+            background-position: center; /* Center the background image */
+            color: #333;
         }
 
         .container {
-            padding-top: 20px;
-            position: relative;
-            z-index: 1;
-            background-color: rgba(255, 255, 255, 0.9); /* Warna latar belakang kontainer dengan transparansi */
-            border-radius: 10px;
+            margin-top: 50px;
             padding: 20px;
+            background-color: rgba(255, 255, 255, 0.9); /* White background with transparency */
+            border-radius: 10px;
+        }
+
+        .table th, .table td {
+            text-align: center; /* Center align table content */
         }
 
         .btn-confirm {
             margin-top: 20px;
         }
+
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 14px;
+            color: #6c757d;
+        }
     </style>
 </head>
 
 <body>
-    <div class="bg-image"></div>
-    <div class="container mt-5">
-        <h1 class="mb-4">Checkout</h1>
-        <table class="table">
+    <div class="container">
+        <h1 class="mb-4 text-center">Checkout</h1>
+        <table class="table table-striped">
             <thead>
                 <tr>
                     <th>Product</th>
@@ -74,15 +75,20 @@ $cart_items = $stmt->fetchAll();
                 <?php endforeach; ?>
             </tbody>
         </table>
-        <h3>Total: <?php
+        <h3 class="text-center">Total: <?php
         $total = 0;
         foreach ($cart_items as $item) {
             $total += $item['price'] * $item['quantity'];
         }
         echo number_format($total, 2, ',', '.'); ?> RP
         </h3>
-        <a href="confirm_checkout.php" class="btn btn-primary btn-confirm">Confirm Purchase</a>
-        <a href="cart.php" class="btn btn-secondary">Back to Cart</a>
+        <div class="text-center">
+            <a href="confirm_checkout.php" class="btn btn-primary btn-confirm">Confirm Purchase</a>
+            <a href="cart.php" class="btn btn-secondary">Back to Cart</a>
+        </div>
+    </div>
+    <div class="footer">
+        &copy; <?php echo date("Y"); ?> Your Company Name. All rights reserved.
     </div>
 </body>
 
