@@ -1,38 +1,47 @@
 <?php
-require '../config.php';
+// Koneksi ke database
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "ppkw";
 
-$success = ''; // Variabel untuk menyimpan pesan sukses
-$error = ''; // Variabel untuk menyimpan pesan error
+// Membuat koneksi
+$conn = mysqli_connect($servername, $username, $password, $dbname);
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $username = $_POST['username'];
-    $email = $_POST['email'];
-    $password = password_hash($_POST['password'], PASSWORD_BCRYPT);
+// Cek koneksi
+if (!$conn) {
+    die("Koneksi gagal: " . mysqli_connect_error());
+}
 
-    // Validasi email yang sudah ada
-    $sql = "SELECT * FROM users WHERE email = ?";
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute([$email]);
-    $existingUser = $stmt->fetch();
+$error = '';
+$success = '';
 
-    if ($existingUser) {
-        $error = "Email is already registered."; // Set pesan error
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Ambil data dari form
+    $email = mysqli_real_escape_string($conn, $_POST['email']);
+    $password = mysqli_real_escape_string($conn, $_POST['password']);
+    $role = 'user'; // Default role adalah user
+
+    // Cek apakah email sudah terdaftar
+    $query = "SELECT * FROM users WHERE email='$email'";
+    $result = mysqli_query($conn, $query);
+
+    if (mysqli_num_rows($result) > 0) {
+        $error = "Email sudah terdaftar!";
     } else {
-        // Insert user ke dalam database
-        $sql = "INSERT INTO users (username, email, password) VALUES (?, ?, ?)";
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([$username, $email, $password]);
-
-        $success = "User registered successfully. Redirecting to login..."; // Set pesan sukses
-        // Redirect setelah beberapa detik
-        echo "<script>setTimeout(function(){ window.location.href = 'login.php'; }, 2000);</script>";
+        // Insert data ke tabel users tanpa hashing password
+        $query = "INSERT INTO users (email, password, role, created_at) VALUES ('$email', '$password', '$role', NOW())";
+        if (mysqli_query($conn, $query)) {
+            $success = "Akun berhasil dibuat. Silakan login.";
+        } else {
+            $error = "Terjadi kesalahan saat membuat akun.";
+        }
     }
 }
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -40,120 +49,59 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        body {
-            background-color: #FFFF00; /* Latar belakang kuning */
-            margin: 0; /* Menghapus margin default dari body */
-        }
-
-        .card {
-            max-width: 500px; /* Maksimal lebar kartu */
-            margin: 50px auto; /* Pusatkan kartu secara vertikal dan horizontal */
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            background-color: #800000; /* Latar belakang maroon */
-            color: #ffffff; /* Teks putih */
-        }
-
-        .card-header {
-            background-color: #000000; /* Latar belakang hitam untuk header */
-            border-radius: 10px 10px 0 0;
-            color: #ffffff; /* Teks putih */
-            text-align: center;
-            padding: 10px;
-        }
-
-        .card-title {
-            margin-top: 10px;
-            font-size: 24px;
-            color: #ffffff; /* Teks putih untuk judul */
-        }
-
-        .form-group label {
-            color: #ffffff; /* Teks label menjadi putih */
-        }
-
-        .form-group input {
-            background-color: #ffffff; /* Latar belakang input */
-            color: #000000; /* Teks input menjadi hitam */
-        }
-
-        .btn-primary {
-            background-color: #000000; /* Tombol menjadi hitam */
-            border: none;
-            color: #ffffff; /* Teks tombol putih */
-        }
-
-        .btn-primary:hover {
-            background-color: #333333; /* Warna tombol saat hover */
-        }
-
-        .text-center {
-            color: #ffffff; /* Teks di bagian text-center menjadi putih */
-        }
-
-        .text-center a {
-            color: #007bff; /* Teks link menjadi biru */
-        }
-
-        .text-center a:hover {
-            text-decoration: underline; /* Garis bawah saat hover */
-        }
+        body { background-color: #FFFF00; margin: 0; }
+        .container { margin-top: 100px; }
+        .card { border: none; border-radius: 10px; box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.1); }
+        .card-header { background-color: #000000; border-radius: 10px 10px 0 0; color: #ffffff; text-align: center; }
+        .card-body { padding: 20px; background-color: #800000; }
+        .form-group label { color: #ffffff; }
+        .form-group input { background-color: #ffffff; color: #000000; }
+        .btn-primary { background-color: #000000; border: none; color: #ffffff; }
+        .btn-primary:hover { background-color: #333333; }
+        .text-center { color: #ffffff; }
+        .text-center a { color: #007bff; }
+        .text-center a:hover { text-decoration: underline; }
     </style>
 </head>
-
 <body>
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-md-6">
-                <div class="card mt-4">
+                <div class="card">
                     <header class="card-header">
-                        <h1 class="card-title">
-                            <i class="fas fa-smile"></i> Register
-                        </h1>
+                        <h4 class="card-title mt-2"><i class="fas fa-user-plus"></i> Register</h4>
                     </header>
-                    <?php if ($success): ?>
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            <?php echo $success; ?>
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                    <?php endif; ?>
-                    <?php if ($error): ?>
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <?php echo $error; ?>
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                    <?php endif; ?>
-                    <form method="post" action="">
-                        <div class="form-group">
-                            <label for="username">Username:</label>
-                            <input type="text" class="form-control" id="username" name="username" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="email">Email:</label>
-                            <input type="email" class="form-control" id="email" name="email" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="password">Password:</label>
-                            <input type="password" class="form-control" id="password" name="password" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Register</button>
-                    </form>
-                    <div class="mt-3 text-center">
-                        <p>Already have an account? <a href="login.php">Login here</a></p>
+                    <article class="card-body">
+                        <?php if ($error): ?>
+                            <div class="alert alert-danger" role="alert">
+                                <?= htmlspecialchars($error); ?>
+                            </div>
+                        <?php endif; ?>
+                        <?php if ($success): ?>
+                            <div class="alert alert-success" role="alert">
+                                <?= htmlspecialchars($success); ?>
+                            </div>
+                        <?php endif; ?>
+                        <form method="post" action="">
+                            <div class="form-group">
+                                <label for="email">Email:</label>
+                                <input type="email" class="form-control" id="email" name="email" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="password">Password:</label>
+                                <input type="password" class="form-control" id="password" name="password" required>
+                            </div>
+                            <div class="form-group">
+                                <button type="submit" class="btn btn-primary btn-block">Register</button>
+                            </div>
+                        </form>
+                    </article>
+                    <div class="border-top card-body text-center">
+                        Already have an account? <a href="login.php">Login</a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
-
 </html>

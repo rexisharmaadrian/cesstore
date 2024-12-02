@@ -1,24 +1,53 @@
 <?php
-require '../config.php';
+
+// Koneksi ke database
+$servername = "localhost";  // Ganti dengan server database Anda
+$username = "root";         // Ganti dengan username database Anda
+$password = "";             // Ganti dengan password database Anda (kosongkan jika tidak ada)
+$dbname = "ppkw";       // Ganti dengan nama database Anda
+
+// Membuat koneksi
+$conn = mysqli_connect($servername, $username, $password, $dbname);
+
+// Cek koneksi
+if (!$conn) {
+    die("Koneksi gagal: " . mysqli_connect_error());
+}
+
 session_start();
 
 $error = ''; // Variabel untuk menyimpan pesan error
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $email = $_POST['email'];
-    $password = $_POST['password'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Mengambil data dari form
+    $email = mysqli_real_escape_string($conn, $_POST['email']);
+    $password = $_POST['password']; // Menggunakan password biasa (tanpa hashing)
 
-    $sql = "SELECT * FROM users WHERE email = ?";
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute([$email]);
-    $user = $stmt->fetch();
+    // Query untuk memeriksa user dengan email yang dimasukkan
+    $query = "SELECT * FROM users WHERE email='$email'";
+    $result = mysqli_query($conn, $query);
 
-    if ($user && password_verify($password, $user['password'])) {
-        $_SESSION['user_id'] = $user['id'];
-        header("Location: ../index.php");
-        exit(); // Pastikan untuk berhenti eksekusi setelah redirect
+    // Mengecek apakah user ditemukan
+    if (mysqli_num_rows($result) > 0) {
+        $user = mysqli_fetch_assoc($result);
+
+        // Cek apakah password yang dimasukkan cocok dengan password yang ada di database
+        if ($password === $user['password']) {
+            // Password cocok, lanjutkan login
+            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['role'] = $user['role'];
+
+            // Redirect berdasarkan role
+            if ($user['role'] === 'admin') {
+                header('Location: ../Admin/dashboard.php'); // Redirect ke dashboard admin
+            } else {
+                header('Location: ../index.php'); // Redirect ke halaman utama
+            }
+        } else {
+            $error = "Email atau password salah!";
+        }
     } else {
-        $error = "Invalid email or password."; // Set pesan error
+        $error = "Email tidak ditemukan!";
     }
 }
 ?>
@@ -34,8 +63,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         body {
-            background-color: #FFFF00; /* Latar belakang kuning */
-            margin: 0; /* Menghapus margin default dari body */
+            background-color: #FFFF00;
+            margin: 0;
         }
 
         .container {
@@ -49,9 +78,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
 
         .card-header {
-            background-color: #000000; /* Latar belakang hitam */
+            background-color: #000000;
             border-radius: 10px 10px 0 0;
-            color: #ffffff; /* Teks putih */
+            color: #ffffff;
             text-align: center;
         }
 
@@ -61,38 +90,38 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         .card-body {
             padding: 20px;
-            background-color: #800000; /* Latar belakang maroon */
+            background-color: #800000;
         }
 
         .form-group label {
-            color: #ffffff; /* Teks label menjadi putih */
+            color: #ffffff;
         }
 
         .form-group input {
-            background-color: #ffffff; /* Latar belakang input */
-            color: #000000; /* Teks input menjadi hitam */
+            background-color: #ffffff;
+            color: #000000;
         }
 
         .btn-primary {
-            background-color: #000000; /* Tombol login menjadi hitam */
+            background-color: #000000;
             border: none;
-            color: #ffffff; /* Teks tombol menjadi putih */
+            color: #ffffff;
         }
 
         .btn-primary:hover {
-            background-color: #333333; /* Warna tombol saat hover */
+            background-color: #333333;
         }
 
         .text-center {
-            color: #ffffff; /* Teks di bagian text-center menjadi putih */
+            color: #ffffff;
         }
 
         .text-center a {
-            color: #007bff; /* Teks link menjadi biru */
+            color: #007bff;
         }
 
         .text-center a:hover {
-            text-decoration: underline; /* Garis bawah saat hover */
+            text-decoration: underline;
         }
     </style>
 </head>
@@ -104,13 +133,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <div class="card">
                     <header class="card-header">
                         <h4 class="card-title mt-2">
-                            <i class="fas fa-smile"></i>
+                            <i class="fas fa-smile"></i> Login
                         </h4>
                     </header>
                     <article class="card-body">
                         <?php if ($error): ?>
                             <div class="alert alert-danger" role="alert">
-                                <?php echo $error; ?>
+                                <?= htmlspecialchars($error); ?>
                             </div>
                         <?php endif; ?>
                         <form method="post" action="">

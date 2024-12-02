@@ -30,6 +30,9 @@ $sql_insert_transaksi = "INSERT INTO transaksi (user_id, total) VALUES (?, ?)";
 $stmt_insert_transaksi = $pdo->prepare($sql_insert_transaksi);
 $stmt_insert_transaksi->execute([$user_id, $total]);
 
+// Get the last inserted transaksi ID
+$transaction_id = $pdo->lastInsertId();
+
 // Clear the cart after checkout
 $sql_clear_cart = "DELETE FROM cart WHERE user_id = ?";
 $stmt_clear_cart = $pdo->prepare($sql_clear_cart);
@@ -57,14 +60,13 @@ $stmt_clear_cart->execute([$user_id]);
         }
 
         .container {
-    max-width: 800px;
-    background-color: #000000; /* Black background for container */
-    color: #FFFFFF; /* White text color for black background */
-    border-radius: 10px;
-    padding: 20px;
-    text-align: center;
-}
-
+            max-width: 800px;
+            background-color: #000000; /* Black background for container */
+            color: #FFFFFF; /* White text color for black background */
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
 
         h1 {
             color: #FFFFFF; /* White text color */
@@ -118,10 +120,10 @@ $stmt_clear_cart->execute([$user_id]);
     <div class="container">
         <h1>Checkout Confirmed</h1>
         <p>Your order has been successfully placed.</p>
-        <h3>Total: <?php echo number_format($total, 2, ',', '.'); ?> RP</h3>
+        <h3>Total Payment: <?php echo number_format($total, 2, ',', '.'); ?> RP</h3>
+        <p>Transaction ID: <?php echo $transaction_id; ?></p>
         <a href="../index.php" class="btn btn-primary btn-home">Back to Home</a>
     </div>
- 
 </body>
 
 </html>

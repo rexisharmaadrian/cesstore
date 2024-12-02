@@ -18,6 +18,27 @@ if (isset($_SESSION['user_id'])) {
     echo "User not logged in.";
     exit(); // Keluar dari script jika pengguna tidak login
 }
+
+// Proses checkout ketika form disubmit
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['payment_method']) && !empty($_POST['payment_method']) && isset($_POST['payment_reference']) && !empty($_POST['payment_reference'])) {
+        // Menyimpan transaksi checkout ke database untuk menunggu konfirmasi admin
+        $payment_method = $_POST['payment_method'];
+        $payment_reference = $_POST['payment_reference']; // ID transaksi atau bukti pembayaran
+
+        // Simpan transaksi ke database (status 'Menunggu Konfirmasi')
+        $sql = "INSERT INTO transaksi (user_id, payment_method, payment_reference, status) 
+                VALUES (?, ?, ?, 'Menunggu Konfirmasi')";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$_SESSION['user_id'], $payment_method, $payment_reference]);
+
+        // Redirect ke halaman konfirmasi setelah pembayaran
+        header('Location: confirm_checkout.php'); // Arahkan ke halaman konfirmasi
+        exit();
+    } else {
+        $error_message = "Please select a payment method and enter payment reference.";
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -73,7 +94,46 @@ if (isset($_SESSION['user_id'])) {
             background-color: #218838; /* Darker green on hover */
             border-color: #1e7e34; /* Even darker green border on hover */
         }
+
+        .btn-secondary {
+            margin-top: 20px;
+            background-color: #6c757d; /* Grey color for secondary button */
+            border-color: #5a6268; /* Darker grey border */
+            color: #FFFFFF; /* White text color */
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+            border-color: #4e555b;
+        }
+
+        .payment-info {
+            margin-top: 20px;
+            font-size: 1.2em;
+            color: #000;
+        }
+
+        .payment-reference {
+            display: none; /* Sembunyikan Payment Reference awalnya */
+        }
     </style>
+
+    <!-- JavaScript untuk otomatis mengisi nomor e-wallet berdasarkan pilihan metode pembayaran -->
+    <script>
+        function updatePaymentReference() {
+            var paymentMethod = document.getElementById("payment_method").value;
+            var paymentReference = document.getElementById("payment_reference");
+            var paymentReferenceWrapper = document.getElementById("payment_reference_wrapper");
+
+            if (paymentMethod === "dana" || paymentMethod === "ovo" || paymentMethod === "gopay") {
+                paymentReference.value = "085774407831";
+                paymentReferenceWrapper.style.display = "block"; // Tampilkan Payment Reference
+            } else {
+                paymentReference.value = "";
+                paymentReferenceWrapper.style.display = "none"; // Sembunyikan Payment Reference
+            }
+        }
+    </script>
 </head>
 <body>
     <div class="container mt-5">
@@ -110,7 +170,31 @@ if (isset($_SESSION['user_id'])) {
             $total += $item['price'] * $item['quantity'];
         }
         echo number_format($total, 2, ',', '.'); ?></h3>
-        <a href="confirm_checkout.php" class="btn btn-confirm">Confirm Purchase</a>
+
+        <!-- Form untuk memilih metode pembayaran dan memasukkan ID transaksi -->
+        <form method="POST">
+            <div class="form-group">
+                <label for="payment_method">Select Payment Method</label>
+                <select class="form-control" id="payment_method" name="payment_method" required onchange="updatePaymentReference()">
+                    <option value="">--Select Payment Method--</option>
+                    <option value="dana">DANA</option>
+                    <option value="ovo">OVO</option>
+                    <option value="gopay">GoPay</option>
+                </select>
+            </div>
+
+            <!-- Payment Reference hanya muncul jika metode pembayaran dipilih -->
+            <div class="form-group payment-reference" id="payment_reference_wrapper">
+                <label for="payment_reference"></label>
+                <input type="text" class="form-control" id="payment_reference" name="payment_reference" required readonly>
+            </div>
+
+            <?php if (isset($error_message)): ?>
+                <div class="alert alert-danger"><?php echo $error_message; ?></div>
+            <?php endif; ?>
+            <button type="submit" class="btn btn-confirm">Confirm Purchase</button>
+        </form>
+
         <a href="cart.php" class="btn btn-secondary">Back to Cart</a>
     </div>
 </body>
